@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI ước lượng cá tra · Trình bày nhà đầu tư</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&display=swap">
+<style>
+/* Bảng màu: nước sông Mekong, phù sa, sắc bạc lưng cá tra, viên thức ăn hổ phách */
+:root{
+  --fg:#13262A; --muted:#4F656B; --paper:#F2F5F4; --card:#FFFFFF; --line:#CBD6D5;
+  --accent:#00846C; --accent-ink:#006B58; --accent-soft:#D2E9E3; --on-accent:#FFFFFF;
+  --reject:#B5452A; --reject-ink:#9C3A22; --reject-soft:#F3DDD4;
+  --neutral:#8B979B; --water:#B09A66; --earth:#D9C79F; --fish:#3F525C; --pellet:#D98E28;
+  --river:#0E2E33; --silt:#C9B88E;
+  --f-ui:"Be Vietnam Pro","Segoe UI",system-ui,sans-serif;
+  --f-serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0A1F23;font-family:var(--f-ui);color:var(--fg)}
+.stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center}
+.slide{position:absolute;inset:0;background:var(--paper);display:none;flex-direction:column;padding:34px 64px 58px;overflow:hidden}
+.slide.on{display:flex}
+.top{display:flex;justify-content:space-between;align-items:center;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.top .sec{display:flex;align-items:center;gap:10px;color:var(--accent-ink)}
+.top .sec::before{content:"";width:33px;height:11px;background:var(--fish);-webkit-mask:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2048%2016%27%3E%3Cpath%20transform%3D%27translate%2848%2C0%29%20scale%28-1%2C1%29%27%20d%3D%27M2%2C8%20C4%2C3.5%2012%2C2.5%2022%2C3%20L20%2C0%20L24.5%2C3.2%20C31%2C3.8%2035%2C5.5%2038%2C7.2%20L46%2C2%20L44%2C8%20L46%2C14%20L38%2C8.8%20C35%2C10.5%2031%2C12.2%2030.5%2C12.4%20L31%2C15.5%20L26.5%2C12.9%20C24%2C13.1%2023%2C13.1%2022%2C13%20C12%2C13.5%204%2C12.5%202%2C8%20Z%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2048%2016%27%3E%3Cpath%20transform%3D%27translate%2848%2C0%29%20scale%28-1%2C1%29%27%20d%3D%27M2%2C8%20C4%2C3.5%2012%2C2.5%2022%2C3%20L20%2C0%20L24.5%2C3.2%20C31%2C3.8%2035%2C5.5%2038%2C7.2%20L46%2C2%20L44%2C8%20L46%2C14%20L38%2C8.8%20C35%2C10.5%2031%2C12.2%2030.5%2C12.4%20L31%2C15.5%20L26.5%2C12.9%20C24%2C13.1%2023%2C13.1%2022%2C13%20C12%2C13.5%204%2C12.5%202%2C8%20Z%27/%3E%3C/svg%3E") center/contain no-repeat}
+.top .pg{font-variant-numeric:tabular-nums}
+h2{font-size:34px;line-height:1.18;margin:14px 0 8px;font-weight:700;letter-spacing:-.01em;max-width:1050px;text-wrap:balance}
+.lead{font-family:var(--f-serif);font-style:italic;font-size:19px;line-height:1.45;color:var(--muted);margin:0 0 16px;max-width:1050px;padding-left:14px;border-left:4px solid var(--pellet)}
+.body{flex:1;min-height:0;display:grid;gap:36px}
+.body.full{grid-template-columns:minmax(0,1fr)}
+.body.side{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);align-items:center}
+.body.s14{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);align-items:center}
+.viz{min-height:0;height:100%;display:flex;align-items:center;justify-content:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+.viz > svg, .viz .scroll > svg{width:100%;height:100%;display:block}
+.viz .scroll{width:100%;height:100%;display:flex;align-items:center}
+.body.side .viz{height:auto}
+.body.side .viz > svg, .body.side .viz .scroll > svg{height:auto}
+.viz.tbl{align-items:flex-start;overflow:hidden}
+.viz.tbl .scroll{display:block;height:auto}
+.pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px}
+.pts li{font-size:18px;line-height:1.45;padding-left:22px;position:relative}
+.pts li::before{content:"";position:absolute;left:0;top:.55em;width:9px;height:9px;border-radius:50%;background:var(--pellet)}
+.foot{margin:12px 0 0;font-size:15px;color:var(--reject-ink);font-weight:600}
+.wave{position:absolute;left:0;right:0;bottom:0;width:100%;height:34px}
+.wv1{fill:var(--accent-soft)}.wv2{fill:var(--silt);opacity:.55}
+.spk{display:none}
+
+table.t{border-collapse:collapse;width:100%;font-size:16px}
+.s14 table.t{font-size:14.5px}
+table.vend{font-size:13px;table-layout:fixed}
+table.vend td{padding:3.5px 8px;line-height:1.3}
+table.vend th{font-size:11.5px;padding:4px 8px}
+.src{display:inline-block;font-size:10.5px;font-weight:700;padding:0 5px;border-radius:3px;background:var(--reject-soft);color:var(--reject-ink);vertical-align:1px}
+.src.ind{background:var(--accent-soft);color:var(--accent-ink)}
+.tnote{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.viz.tbl{flex-direction:column;justify-content:flex-start}
+.viz.tbl > *{width:100%}
+table.t th{text-align:left;font-weight:600;color:var(--muted);font-size:13px;letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid var(--line);padding:8px 10px}
+table.t td{border-bottom:1px solid var(--line);padding:9px 10px;vertical-align:top}
+table.t td:first-child{font-weight:600}
+.ok{background:var(--accent-soft);color:var(--accent-ink);font-weight:600;padding:1px 7px;border-radius:4px;white-space:nowrap}
+.no{background:var(--reject-soft);color:var(--reject-ink);font-weight:600;padding:1px 7px;border-radius:4px;white-space:nowrap}
+.mid{background:#F5E6C6;color:#7A5410;font-weight:600;padding:1px 7px;border-radius:4px;white-space:nowrap}
+.vend .ok,.vend .mid,.vend .no{white-space:normal;display:inline-block;line-height:1.3}
+
+/* bìa */
+.cover{background:var(--river);padding:0}
+.cover-art{position:absolute;inset:0;width:100%;height:100%}
+.cover-text{position:relative;padding:150px 0 0 80px;max-width:920px;color:#EAF1F0}
+.cover .kicker{font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#7FD3C3;font-weight:600}
+.cover h1{font-size:46px;white-space:nowrap;line-height:1.12;margin:18px 0 22px;font-weight:700;letter-spacing:-.015em}
+.cover p{font-family:var(--f-serif);font-size:21px;line-height:1.5;color:#B9CACA;margin:0;max-width:600px}
+
+/* ký hiệu trong sơ đồ */
+.dg text{fill:var(--fg);font-family:var(--f-ui);font-size:13px}
+.dg .t10{font-size:10px}.dg .t14{font-size:14px}.dg .tw{fill:#FFFFFF}.dg .t11{font-size:11px}.dg .t12{font-size:12px}.dg .t13{font-size:13px}.dg .t16{font-size:16px}.dg .t20{font-size:20px}.dg .t28{font-size:28px}.dg .t40{font-size:40px}
+.dg .b{font-weight:600}.dg .bb{font-weight:700}
+.dg .tm{fill:var(--muted)}.dg .ta{fill:var(--accent-ink)}.dg .tr{fill:var(--reject-ink)}.dg .ton{fill:var(--on-accent)}
+.fa{fill:var(--accent)}.fas{fill:var(--accent-soft)}.fr{fill:var(--reject)}.frs{fill:var(--reject-soft)}
+.fn{fill:var(--neutral)}.fw{fill:var(--water)}.fe{fill:var(--earth)}.ff{fill:var(--fish)}.fc{fill:var(--card)}.fg{fill:var(--fg)}.fp{fill:var(--pellet)}.nf{fill:none}
+.k{stroke:var(--fg);stroke-width:1.4}.km{stroke:var(--muted);stroke-width:1.2}.ka{stroke:var(--accent);stroke-width:2}
+.kr{stroke:var(--reject);stroke-width:1.6}.kl{stroke:var(--line);stroke-width:1}.dash{stroke-dasharray:5 4}
+.fo{fill:var(--fish);stroke:var(--accent-soft);stroke-width:1.3}.fo2{fill:var(--fish);stroke:var(--water);stroke-width:1.3}
+.mk{fill:var(--fg)}.mka{fill:var(--accent)}
+
+/* điều khiển */
+.ctrl{position:fixed;right:18px;bottom:16px;display:flex;gap:8px;align-items:center;opacity:.25;transition:opacity .2s;z-index:5}
+.ctrl:hover,.ctrl:focus-within{opacity:1}
+.ctrl button{font:600 13px var(--f-ui);background:#163B41;color:#E6EFEE;border:1px solid #2C5960;border-radius:6px;padding:7px 12px;cursor:pointer}
+.ctrl button:focus-visible{outline:2px solid #7FD3C3}
+.bar{position:fixed;left:0;top:0;height:3px;background:var(--pellet);z-index:5;transition:width .2s}
+.notes-panel{position:fixed;left:0;right:0;bottom:0;max-height:38vh;overflow:auto;background:#0E2629;color:#DCE7E6;font:15px/1.55 var(--f-ui);padding:16px 24px 56px;border-top:3px solid var(--pellet);z-index:4}
+.notes-panel[hidden]{display:none}
+.notes-panel .msg{font-style:italic;color:#9FD9CC;margin:0 0 8px}
+.notes-panel ul{margin:0;padding-left:20px}
+@media (prefers-reduced-motion:reduce){.ctrl,.bar{transition:none}}
+
+@media print{
+  @page{size:1280px 720px;margin:0}
+  html,body{background:#fff;height:auto}
+  .stage{position:static;transform:none!important;width:1280px;height:auto}
+  .slide{display:flex!important;position:relative;width:1280px;height:720px;break-after:page;page-break-after:always}
+  .ctrl,.bar,.notes-panel{display:none!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+    <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mka"/></marker>
+    <pattern id="ticks" width="3" height="10" patternUnits="userSpaceOnUse"><rect width="1.3" height="10" class="fa"/></pattern>
+  <symbol id="ca" viewBox="0 0 48 16" overflow="visible"><path d="M2,8 C4,3.5 12,2.5 22,3 L20,0 L24.5,3.2 C31,3.8 35,5.5 38,7.2 L46,2 L44,8 L46,14 L38,8.8 C35,10.5 31,12.2 30.5,12.4 L31,15.5 L26.5,12.9 C24,13.1 23,13.1 22,13 C12,13.5 4,12.5 2,8 Z"/></symbol></defs>
+</svg>
+<div class="bar" aria-hidden="true"></div>
+<main class="stage" id="stage">
+
+<section class="slide cover" aria-label="Slide 1: Bìa">
+  <svg class="cover-art" viewBox="0 0 1280 720" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0E2E33"/><stop offset="1" stop-color="#123A40"/></linearGradient>
+      <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6E6440"/><stop offset="1" stop-color="#3E3A26"/></linearGradient>
+    </defs>
+    <rect width="1280" height="720" fill="url(#cg)"/>
+    <rect x="0" y="520" width="1280" height="200" fill="url(#wg)"/>
+    <rect x="0" y="520" width="1280" height="26" fill="#1D5E5A"/>
+    <g transform="translate(150,0)">
+    <line x1="1010" y1="520" x2="1010" y2="90" stroke="#9FB3B8" stroke-width="6"/>
+    <line x1="1010" y1="100" x2="860" y2="100" stroke="#9FB3B8" stroke-width="5"/>
+    <rect x="842" y="102" width="36" height="22" rx="3" fill="#E6EEF0"/>
+    <polygon points="860,124 735,520 985,520" fill="#2FA593" opacity=".16"/>
+    <use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(766.1,529.7) rotate(-1) scale(-1,1)" x="-22.5" y="-7.5" width="44.9" height="15.0"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(935.0,530.0) rotate(3) scale(-1,1)" x="-22.4" y="-7.5" width="44.8" height="14.9"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(890.9,536.6) rotate(-5)" x="-20.8" y="-6.9" width="41.6" height="13.9"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(958.3,532.8) rotate(3) scale(-1,1)" x="-25.7" y="-8.6" width="51.4" height="17.1"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(750.0,532.4) rotate(3) scale(-1,1)" x="-21.1" y="-7.0" width="42.2" height="14.1"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(941.6,536.9)" x="-20.0" y="-6.7" width="40.0" height="13.3"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(914.0,530.8) rotate(1)" x="-25.5" y="-8.5" width="51.1" height="17.0"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(782.5,536.2) rotate(-1)" x="-20.0" y="-6.7" width="40.0" height="13.3"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(876.3,535.1) rotate(-4) scale(-1,1)" x="-19.3" y="-6.4" width="38.7" height="12.9"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(974.6,534.0) rotate(-1) scale(-1,1)" x="-19.8" y="-6.6" width="39.7" height="13.2"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(783.1,529.1) rotate(-3)" x="-20.7" y="-6.9" width="41.4" height="13.8"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(768.8,536.8) rotate(5) scale(-1,1)" x="-19.3" y="-6.4" width="38.6" height="12.9"/><use href="#ca" fill="#5B7480" stroke="#1D5E5A" stroke-width="1.6" transform="translate(896.7,529.6) rotate(2)" x="-20.8" y="-6.9" width="41.6" height="13.9"/><use href="#ca" fill="#6F8A96" stroke="#1D5E5A" stroke-width="1.6" transform="translate(830.0,531.0)" x="-26.0" y="-8.7" width="52.0" height="17.3"/>
+    <ellipse cx="830" cy="531" rx="30" ry="12" fill="none" stroke="#3CC4AE" stroke-width="2.5"/>
+    <g fill="#E3A23C"><circle cx="760" cy="518" r="3"/><circle cx="792" cy="518" r="3"/><circle cx="858" cy="518" r="3"/><circle cx="920" cy="518" r="3"/><circle cx="975" cy="518" r="3"/></g>
+    </g>
+    <g fill="none" stroke="#8C8358" stroke-width="2" opacity=".6">
+      <path d="M0,600 C120,590 240,612 360,600 S600,588 720,600 S960,612 1080,600 S1240,590 1280,598"/>
+      <path d="M0,650 C140,640 260,662 400,650 S640,638 780,650 S1020,662 1160,650 S1260,644 1280,648"/>
+    </g>
+  </svg>
+  <div class="cover-text">
+    <div class="kicker">Đề án đầu tư · Cần Thơ · 10/2026</div>
+    <h1>AI ước lượng khối lượng cá tra<br>từ video lúc cho ăn</h1>
+    <p>Khối lượng từng con · phân bố khối lượng toàn ao · camera đặt trên mặt nước, ao đất Đồng bằng sông Cửu Long</p>
+  </div>
+  <aside class="spk"><p>Giới thiệu đơn vị trình bày và mục tiêu buổi trình bày: giải pháp, tính khả thi, các mô hình và phương pháp hiện có trên thế giới, và cơ sở lựa chọn tự phát triển.</p></aside>
+</section>
+
+<section class="slide" aria-label="Slide 2: Tổng quan giải pháp">
+  <header class="top"><span class="sec">Tóm tắt</span><span class="pg">2 / 14</span></header>
+  <h2>Tổng quan giải pháp</h2>
+  <p class="lead">Camera trên mặt nước đo từng con cá lúc cho ăn (bài toán 1), rồi suy ra phân bố khối lượng của cả ao (bài toán 2).</p>
+  <div class="body full"><div class="viz"><svg class="dg" viewBox="0 0 1200 512" role="img" aria-label="Mặt cắt ao: camera treo 5 m chụp lớp cá lên ăn và thước thủy chí đo mực nước là đầu vào; cùng số liệu cân đối chứng, dữ liệu được xử lý tại bờ ao và máy chủ; đầu ra trên app gồm phân bố cỡ, khối lượng trung bình kèm ngày đạt cỡ, và cảnh báo đề nghị chài xác nhận.">
+        <polygon points="0,190 70,190 100,230 150,420 770,420 770,440 0,440" class="fe"/>
+        <polygon points="100,230 770,230 770,420 150,420" class="fw"/>
+        <polygon points="100,230 770,230 770,252 106,252" class="fas"/>
+        <text x="760" y="246" text-anchor="end" class="t12 b">lớp mặt 0–25 cm: cá lên ăn</text>
+        <line x1="111" y1="270" x2="770" y2="270" class="km dash"/>
+        <text x="760" y="288" text-anchor="end" class="t12">tầm nhìn dưới nước tắt sau 15–40 cm</text>
+        <g><use href="#ca" class="km dash nf" transform="translate(242.4,325.8) rotate(-10) scale(-1,1)" x="-20.9" y="-7.0" width="41.8" height="13.9"/><use href="#ca" class="km dash nf" transform="translate(221.8,326.1) rotate(-9)" x="-20.2" y="-6.7" width="40.5" height="13.5"/><use href="#ca" class="km dash nf" transform="translate(621.4,347.9) rotate(-1) scale(-1,1)" x="-26.3" y="-8.8" width="52.7" height="17.6"/><use href="#ca" class="km dash nf" transform="translate(480.1,318.6) rotate(-8) scale(-1,1)" x="-20.8" y="-6.9" width="41.6" height="13.9"/><use href="#ca" class="km dash nf" transform="translate(243.7,314.9) rotate(10) scale(-1,1)" x="-20.4" y="-6.8" width="40.8" height="13.6"/><use href="#ca" class="km dash nf" transform="translate(294.7,320.6) rotate(-9) scale(-1,1)" x="-25.4" y="-8.5" width="50.8" height="16.9"/><use href="#ca" class="km dash nf" transform="translate(585.7,353.3) rotate(-7) scale(-1,1)" x="-24.0" y="-8.0" width="48.0" height="16.0"/><use href="#ca" class="km dash nf" transform="translate(237.7,338.4) rotate(14) scale(-1,1)" x="-26.0" y="-8.7" width="52.1" height="17.4"/><use href="#ca" class="km dash nf" transform="translate(236.4,358.1) rotate(14) scale(-1,1)" x="-22.8" y="-7.6" width="45.6" height="15.2"/><use href="#ca" class="km dash nf" transform="translate(498.9,354.9) rotate(11) scale(-1,1)" x="-26.3" y="-8.8" width="52.5" height="17.5"/><use href="#ca" class="km dash nf" transform="translate(422.6,311.7) rotate(5)" x="-23.8" y="-7.9" width="47.6" height="15.9"/><use href="#ca" class="km dash nf" transform="translate(631.0,304.6) rotate(-6)" x="-21.4" y="-7.1" width="42.9" height="14.3"/><use href="#ca" class="km dash nf" transform="translate(529.7,318.8) rotate(5) scale(-1,1)" x="-19.4" y="-6.5" width="38.7" height="12.9"/><use href="#ca" class="km dash nf" transform="translate(444.4,322.6) rotate(-14) scale(-1,1)" x="-23.3" y="-7.8" width="46.6" height="15.5"/><use href="#ca" class="km dash nf" transform="translate(594.9,321.2) rotate(4)" x="-21.8" y="-7.3" width="43.7" height="14.6"/><use href="#ca" class="km dash nf" transform="translate(679.6,308.1) rotate(1) scale(-1,1)" x="-23.5" y="-7.8" width="46.9" height="15.6"/><use href="#ca" class="km dash nf" transform="translate(310.6,347.9) rotate(-6)" x="-19.5" y="-6.5" width="39.0" height="13.0"/><use href="#ca" class="km dash nf" transform="translate(437.5,304.6) rotate(-2) scale(-1,1)" x="-20.4" y="-6.8" width="40.8" height="13.6"/></g>
+        <text x="430" y="384" text-anchor="middle" class="t12">cá ở tầng dưới: ngoài tầm nhìn quang học</text>
+        <use href="#ca" class="fo2" transform="translate(726.2,411.6) rotate(3)" x="-10.7" y="-3.6" width="21.4" height="7.1"/><use href="#ca" class="fo2" transform="translate(695.0,412.6) rotate(4)" x="-8.6" y="-2.9" width="17.2" height="5.7"/><use href="#ca" class="fo2" transform="translate(744.1,406.8) rotate(6) scale(-1,1)" x="-10.8" y="-3.6" width="21.5" height="7.2"/><use href="#ca" class="fo2" transform="translate(670.2,409.8) rotate(3)" x="-10.1" y="-3.4" width="20.3" height="6.8"/><use href="#ca" class="fo2" transform="translate(644.0,407.5) rotate(5)" x="-10.5" y="-3.5" width="21.0" height="7.0"/><use href="#ca" class="fo2" transform="translate(746.9,411.4) rotate(-2) scale(-1,1)" x="-9.5" y="-3.2" width="19.0" height="6.3"/>
+        <text x="622" y="413" text-anchor="end" class="t12">cá còi nằm đáy</text>
+        <polygon points="331,78 200,230 460,230" class="fas" opacity=".45"/>
+        <line x1="331" y1="78" x2="200" y2="230" class="ka" stroke-width="1" opacity=".7"/>
+        <line x1="331" y1="78" x2="460" y2="230" class="ka" stroke-width="1" opacity=".7"/>
+        <g class="fp">
+          <circle cx="215" cy="228" r="2.4"/><circle cx="233" cy="228" r="2.4"/><circle cx="251" cy="228" r="2.4"/><circle cx="287" cy="228" r="2.4"/>
+          <circle cx="323" cy="228" r="2.4"/><circle cx="341" cy="228" r="2.4"/><circle cx="377" cy="228" r="2.4"/><circle cx="413" cy="228" r="2.4"/><circle cx="449" cy="228" r="2.4"/>
+        </g>
+        <text x="110" y="150" class="t12 b">viên thức ăn nổi</text>
+        <text x="110" y="166" class="t11 tm">6 tấn/ngày ở ao 400 tấn</text>
+        <line x1="170" y1="171" x2="214" y2="223" class="km"/>
+        <g><use href="#ca" class="fo" transform="translate(213.1,240.5) rotate(-6) scale(-1,1)" x="-16.6" y="-5.5" width="33.1" height="11.0"/><use href="#ca" class="fo" transform="translate(268.0,245.5) rotate(-7)" x="-16.3" y="-5.4" width="32.7" height="10.9"/><use href="#ca" class="fo" transform="translate(441.8,239.8) rotate(-2)" x="-15.2" y="-5.1" width="30.5" height="10.2"/><use href="#ca" class="fo" transform="translate(266.9,238.2) scale(-1,1)" x="-13.4" y="-4.5" width="26.8" height="8.9"/><use href="#ca" class="fo" transform="translate(347.7,242.4) rotate(-1) scale(-1,1)" x="-17.0" y="-5.7" width="34.1" height="11.4"/><use href="#ca" class="fo" transform="translate(457.0,244.6) rotate(-7) scale(-1,1)" x="-13.1" y="-4.4" width="26.2" height="8.7"/><use href="#ca" class="fo" transform="translate(427.7,244.5) rotate(5) scale(-1,1)" x="-15.5" y="-5.2" width="31.1" height="10.4"/><use href="#ca" class="fo" transform="translate(355.9,236.3) rotate(-4) scale(-1,1)" x="-15.0" y="-5.0" width="30.1" height="10.0"/><use href="#ca" class="fo" transform="translate(224.4,244.7) rotate(7)" x="-14.6" y="-4.9" width="29.1" height="9.7"/><use href="#ca" class="fo" transform="translate(212.7,236.1) rotate(-2)" x="-12.5" y="-4.2" width="25.0" height="8.3"/><use href="#ca" class="fo" transform="translate(340.8,237.7) rotate(-7)" x="-13.0" y="-4.3" width="25.9" height="8.6"/><use href="#ca" class="fo" transform="translate(360.4,244.2) rotate(-3)" x="-13.3" y="-4.4" width="26.5" height="8.8"/><use href="#ca" class="fo" transform="translate(251.3,243.0) rotate(-6) scale(-1,1)" x="-16.3" y="-5.4" width="32.6" height="10.9"/><use href="#ca" class="fo" transform="translate(235.2,242.7) rotate(5) scale(-1,1)" x="-13.2" y="-4.4" width="26.3" height="8.8"/><use href="#ca" class="fo" transform="translate(453.5,238.3) rotate(1) scale(-1,1)" x="-14.9" y="-5.0" width="29.8" height="9.9"/><use href="#ca" class="fo" transform="translate(234.4,237.2) rotate(-2)" x="-16.0" y="-5.3" width="32.0" height="10.7"/><use href="#ca" class="fo" transform="translate(337.6,245.2) rotate(-7)" x="-12.6" y="-4.2" width="25.3" height="8.4"/><use href="#ca" class="fo" transform="translate(431.8,237.4) rotate(-5) scale(-1,1)" x="-13.8" y="-4.6" width="27.5" height="9.2"/><use href="#ca" class="fo" transform="translate(244.4,237.3) rotate(-1)" x="-14.1" y="-4.7" width="28.3" height="9.4"/><use href="#ca" class="fo" transform="translate(438.7,244.5) rotate(1) scale(-1,1)" x="-12.9" y="-4.3" width="25.8" height="8.6"/><use href="#ca" class="fo" transform="translate(223.0,237.2) rotate(-3) scale(-1,1)" x="-13.1" y="-4.4" width="26.3" height="8.8"/><use href="#ca" class="fo" transform="translate(212.3,245.4) rotate(3)" x="-12.1" y="-4.0" width="24.2" height="8.1"/><use href="#ca" class="fo" transform="translate(423.3,239.9) rotate(1) scale(-1,1)" x="-12.1" y="-4.0" width="24.1" height="8.0"/><use href="#ca" class="fo" transform="translate(254.5,236.7) rotate(6)" x="-13.2" y="-4.4" width="26.4" height="8.8"/><use href="#ca" class="fo" transform="translate(276.3,236.7) rotate(-3)" x="-12.3" y="-4.1" width="24.7" height="8.2"/><use href="#ca" class="fo" transform="translate(179.7,237.5) rotate(3) scale(-1,1)" x="-15.8" y="-5.3" width="31.6" height="10.5"/><use href="#ca" class="fo" transform="translate(177.2,242.9) rotate(7)" x="-11.4" y="-3.8" width="22.8" height="7.6"/><use href="#ca" class="fo" transform="translate(148.2,241.8) rotate(-4) scale(-1,1)" x="-14.3" y="-4.8" width="28.7" height="9.6"/><use href="#ca" class="fo" transform="translate(162.2,238.3) rotate(3)" x="-14.0" y="-4.7" width="28.1" height="9.4"/><use href="#ca" class="fo" transform="translate(527.9,240.0) rotate(3) scale(-1,1)" x="-12.2" y="-4.1" width="24.4" height="8.1"/><use href="#ca" class="fo" transform="translate(551.1,239.1)" x="-11.1" y="-3.7" width="22.1" height="7.4"/><use href="#ca" class="fo" transform="translate(562.5,240.8) rotate(5) scale(-1,1)" x="-12.2" y="-4.1" width="24.3" height="8.1"/><use href="#ca" class="fo" transform="translate(535.0,243.9)" x="-11.8" y="-3.9" width="23.5" height="7.8"/><use href="#ca" class="fo" transform="translate(488.9,243.9) rotate(-4)" x="-12.5" y="-4.2" width="25.0" height="8.3"/><use href="#ca" class="fo" transform="translate(306.0,240.0)" x="-17.0" y="-5.7" width="34.0" height="11.3"/><use href="#ca" class="fo" transform="translate(394.0,240.0) scale(-1,1)" x="-17.0" y="-5.7" width="34.0" height="11.3"/></g>
+        <ellipse cx="306" cy="240" rx="21" ry="8" class="ka nf"/><ellipse cx="394" cy="240" rx="21" ry="8" class="ka nf"/>
+        <line x1="300" y1="231" x2="282" y2="205" class="km"/>
+        <text x="234" y="200" class="t12 b">đo diện tích lưng từng con</text>
+        <line x1="40" y1="190" x2="40" y2="50" class="k" stroke-width="4"/>
+        <line x1="40" y1="56" x2="336" y2="56" class="k" stroke-width="3"/>
+        <rect x="318" y="58" width="26" height="16" rx="2" class="fg"/>
+        <circle cx="331" cy="76" r="3" class="fa"/>
+        <text x="352" y="96" class="t12 bb ta">1 · Đầu vào: video lúc cho ăn</text>
+        <text x="352" y="111" class="t11 tm">camera 8 MP nhìn thẳng xuống, 2 cữ/ngày</text>
+        <line x1="346" y1="66" x2="586" y2="66" class="km dash"/>
+        <line x1="580" y1="66" x2="580" y2="230" class="km" marker-start="url(#ah)" marker-end="url(#ah)"/>
+        <text x="572" y="186" text-anchor="end" class="t13 b">H = 5 m</text>
+        <rect x="444" y="196" width="8" height="10" class="fg"/><rect x="444" y="206" width="8" height="10" class="fc"/>
+        <rect x="444" y="216" width="8" height="10" class="fg"/><rect x="444" y="226" width="8" height="10" class="fc"/>
+        <rect x="444" y="236" width="8" height="10" class="fg"/><rect x="444" y="246" width="8" height="10" class="fc"/>
+        <rect x="444" y="256" width="8" height="10" class="fg"/>
+        <rect x="444" y="196" width="8" height="70" class="k nf" stroke-width=".8"/>
+        <text x="458" y="207" class="t11 bb ta">1 · Đầu vào: mực nước</text>
+        <text x="458" y="221" class="t11 tm">đọc từ thước thủy chí</text>
+
+        <rect x="596" y="96" width="190" height="66" rx="6" class="fc k"/>
+        <text x="608" y="116" class="t11 bb ta">1 · Đầu vào: số liệu cân</text>
+        <text x="608" y="133" class="t11 tm">mẻ chài của công nhân,</text>
+        <text x="608" y="149" class="t11 tm">bảng phân cỡ nhà máy, sổ nuôi</text>
+        <line x1="691" y1="96" x2="691" y2="62" class="k" marker-end="url(#ah)"/>
+
+        <line x1="344" y1="62" x2="378" y2="40" class="k" marker-end="url(#ah)"/>
+        <rect x="380" y="8" width="206" height="52" rx="6" class="fas ka"/>
+        <text x="392" y="29" class="t13 bb">2 · Xử lý tại bờ ao</text>
+        <text x="392" y="47" class="t11 tm">bài toán 1: gram từng con</text>
+        <line x1="586" y1="34" x2="604" y2="34" class="k" marker-end="url(#ah)"/>
+        <rect x="606" y="8" width="180" height="52" rx="6" class="fas ka"/>
+        <text x="618" y="29" class="t13 bb">2 · Xử lý tại máy chủ</text>
+        <text x="618" y="47" class="t11 tm">bài toán 2: phân bố toàn ao</text>
+        <path d="M786,34 H1000 V66" class="k nf" marker-end="url(#ah)"/>
+
+        <rect x="800" y="70" width="400" height="436" rx="8" class="fc kl"/>
+        <path d="M800,100 V78 Q800,70 808,70 H1192 Q1200,70 1200,78 V100 Z" class="ff"/>
+        <text x="1000" y="90" text-anchor="middle" class="t13 bb tw">3 · Đầu ra trên app, Zalo</text>
+        
+        <text x="816" y="124" class="t13 b">Phân bố cỡ của đàn đang ăn</text>
+        <rect x="832" y="231" width="26" height="5" rx="2" class="fn" opacity=".45"/><rect x="860" y="221" width="26" height="15" rx="2" class="fn" opacity=".45"/><rect x="888" y="204" width="26" height="32" rx="2" class="fn" opacity=".45"/><rect x="916" y="183" width="26" height="53" rx="2" class="fas ka" stroke-width="1"/><rect x="944" y="165" width="26" height="71" rx="2" class="fas ka" stroke-width="1"/><rect x="972" y="159" width="26" height="77" rx="2" class="fas ka" stroke-width="1"/><rect x="1000" y="168" width="26" height="68" rx="2" class="fas ka" stroke-width="1"/><rect x="1028" y="183" width="26" height="53" rx="2" class="fas ka" stroke-width="1"/><rect x="1056" y="200" width="26" height="36" rx="2" class="fas ka" stroke-width="1"/><rect x="1084" y="214" width="26" height="22" rx="2" class="fr"/><rect x="1112" y="224" width="26" height="12" rx="2" class="fr"/><rect x="1140" y="231" width="26" height="5" rx="2" class="fr"/>
+        <line x1="915" y1="140" x2="915" y2="236" class="km dash"/><line x1="1083" y1="140" x2="1083" y2="236" class="km dash"/>
+        <line x1="828" y1="236" x2="1170" y2="236" class="km"/>
+        <g class="t11" text-anchor="middle"><text x="873" y="251">dưới cỡ</text><text x="999" y="251">đúng cỡ</text><text x="1125" y="251">quá cỡ</text></g>
+        <text x="873" y="178" text-anchor="middle" class="t10 tm">không ước:</text>
+        <text x="873" y="190" text-anchor="middle" class="t10 tm">lấy từ mẻ chài</text>
+        <text x="1125" y="176" text-anchor="middle" class="t10 tm">tỉ lệ quá cỡ</text>
+        <text x="1125" y="192" text-anchor="middle" class="t12 bb tr">13 % ± 2 điểm</text>
+        <text x="816" y="272" class="t11">Độ đồng đều: CV 25 % ± 1,2 điểm</text>
+        <text x="1184" y="272" text-anchor="end" class="t10 tm">số liệu minh hoạ</text>
+        <line x1="812" y1="284" x2="1188" y2="284" class="kl"/>
+        
+        <text x="816" y="304" class="t13 b">Khối lượng trung bình · dự báo đạt cỡ khoảng ngày 165</text>
+        <g class="kl"><line x1="868" y1="436" x2="1180" y2="436"/><line x1="868" y1="379" x2="1180" y2="379"/><line x1="868" y1="322" x2="1180" y2="322"/></g>
+        <g class="t10 tm" text-anchor="end"><text x="862" y="439">0</text><text x="862" y="382">600</text><text x="862" y="325">1.200 g</text></g>
+        <g class="t10 tm" text-anchor="middle"><text x="868" y="450">0</text><text x="957.1" y="450">60</text><text x="1046.3" y="450">120</text><text x="1135.4" y="450">180 ngày</text></g>
+        <polygon points="868,433.8 890.3,432.5 912.6,430.4 934.9,427.1 957.1,422.9 979.4,415.6 1001.7,405.4 1024,392.2 1046.3,381.1 1068.6,366.4 1090.9,352.7 1113.1,340.3 1135.4,331.1 1157.7,324 1180,318.5 1180,354.4 1157.7,354.9 1135.4,356.8 1113.1,360.8 1090.9,366.5 1068.6,375.5 1046.3,386.4 1024,400.9 1001.7,410.4 979.4,418.3 957.1,424.2 934.9,429 912.6,431.7 890.3,433.4 868,434.4" class="fas"/>
+        <line x1="868" y1="350.5" x2="1180" y2="350.5" class="kr dash"/>
+        <text x="872" y="346.5" class="t10 tr b">cỡ thu hoạch 900 g</text>
+        <polyline points="868,434.1 890.3,432.9 912.6,431 934.9,428.1 957.1,423.5 979.4,416.9 1001.7,407.9 1024,396.5 1046.3,383.8 1068.6,371 1090.9,359.6" class="ka nf" stroke-width="2.2"/>
+        <polyline points="1090.9,359.6 1113.1,350.6 1135.4,344 1157.7,339.4 1180,336.5" class="ka nf dash" stroke-width="2.2"/>
+        <line x1="1090.9" y1="322" x2="1090.9" y2="436" class="km dash"/>
+        <text x="1086.9" y="334" text-anchor="end" class="t10 tm">hôm nay</text>
+        <path d="M957.1,418.5 L962.1,423.5 L957.1,428.5 L952.1,423.5 Z" class="fg"/><path d="M1046.3,378.8 L1051.3,383.8 L1046.3,388.8 L1041.3,383.8 Z" class="fg"/>
+        <text x="1054.3" y="399.8" class="t10 b">◆ điểm neo: cân thật</text>
+        
+        <line x1="812" y1="460" x2="1188" y2="460" class="kl"/>
+        <rect x="816" y="468" width="210" height="30" rx="8" class="fa"/>
+        <text x="921" y="488" text-anchor="middle" class="t12 bb ton">HÃY CHÀI ĐỂ XÁC NHẬN</text>
+        <text x="1038" y="481" class="t10 tm">cảnh báo khi vượt ngưỡng</text>
+        <text x="1038" y="494" class="t10 tm">phân cỡ, kèm trạm cần chài</text>
+      </svg></div></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p>Giới thiệu toàn bộ giải pháp trong một phút theo ba số trên hình: (1) đầu vào: video lúc cho ăn, mực nước, số liệu cân đối chứng; (2) xử lý tại bờ ao và máy chủ; (3) đầu ra trên app. Nhấn mạnh camera đo <b>từng con</b> cá ở mặt nước, không đo diện tích cả đàn; tổng sinh khối cần thêm số con còn sống, lấy từ sổ nuôi. Các con số trong khối đầu ra là minh hoạ.</p></aside>
+</section>
+<section class="slide" aria-label="Slide 3: Hai vấn đề chính: khối lượng từng con và phân bố toàn ao">
+  <header class="top"><span class="sec">01 · Bài toán</span><span class="pg">3 / 14</span></header>
+  <h2>Hai vấn đề chính: khối lượng từng con và phân bố toàn ao</h2>
+  <p class="lead">Quyết định thu hoạch và phân cỡ cần hai đại lượng mà mẻ chài 17–30 con hiện nay chỉ ước được thô.</p>
+  <div class="body full"><div class="viz"><svg class="dg" viewBox="0 0 1200 450" role="img" aria-label="Hai vấn đề chính. Bài toán 1: mỗi con cá trong ao nặng bao nhiêu, từ ảnh lưng một con suy ra khối lượng con đó. Bài toán 2: phân bố khối lượng của toàn bộ ao, từ khối lượng các con quan sát được suy ra tỉ lệ quá cỡ, độ đồng đều và khối lượng trung bình. Kết quả bài toán 1 là đầu vào của bài toán 2.">
+  <rect x="0" y="0" width="540" height="338" rx="8" class="fas ka"/>
+  <text x="20" y="30" class="t11 bb ta" letter-spacing=".5">BÀI TOÁN 1 · KHỐI LƯỢNG TỪNG CON</text>
+  <text x="20" y="60" class="t20 bb">Mỗi con cá trong ao nặng bao nhiêu?</text>
+  <ellipse cx="125" cy="130" rx="92" ry="25" class="ka nf dash"/>
+  <path d="M45,130 C45,116 70,111 125,111 C175,111 200,120 210,130 C200,140 175,149 125,149 C70,149 45,144 45,130 Z" class="ff"/>
+  <polygon points="208,130 240,112 234,130 240,148" class="ff"/>
+  <polygon points="85,114 98,96 104,113" class="ff"/><polygon points="85,146 98,164 104,147" class="ff"/>
+  <text x="125" y="178" text-anchor="middle" class="t11 ta b">mask lưng: diện tích A</text>
+  <line x1="262" y1="130" x2="300" y2="130" class="k" marker-end="url(#ah)"/>
+  <text x="314" y="120" class="t16 b ta">W = a·A<tspan dy="-6" class="t11">b</tspan></text>
+  <text x="314" y="148" class="t20 bb">? gram</text>
+  <line x1="20" y1="196" x2="520" y2="196" class="kl"/>
+  <g class="t13">
+    <text x="20" y="222" class="b tm">Hiện nay</text><text x="120" y="222">chỉ biết khi bắt lên cân; mỗi mẻ chài trung bình 17 con</text>
+    <text x="20" y="248" class="b tm">Đầu vào</text><text x="120" y="248">ảnh lưng của một con ở lớp mặt nước lúc cho ăn</text>
+    <text x="20" y="274" class="b tm">Đầu ra</text><text x="120" y="274">khối lượng con đó, kèm khoảng sai số</text>
+    <text x="20" y="300" class="b tm">Khó khăn</text><text x="120" y="300">sai số đo: khúc xạ, độ sâu, tư thế cá, nước đục</text>
+    <text x="20" y="326" class="b tm">Mục tiêu</text><text x="120" y="326" class="b ta">sai số từng con ≤ 15 %; lệch trung bình ≤ 3–5 %</text>
+  </g>
+
+  <line x1="542" y1="130" x2="638" y2="130" class="ka" marker-end="url(#aha)"/>
+  <text x="590" y="108" text-anchor="middle" class="t11 ta b">gram</text>
+  <text x="590" y="122" text-anchor="middle" class="t11 ta b">từng con</text>
+
+  <rect x="640" y="0" width="560" height="338" rx="8" class="fas ka"/>
+  <text x="660" y="30" class="t11 bb ta" letter-spacing=".5">BÀI TOÁN 2 · PHÂN BỐ TOÀN AO</text>
+  <text x="660" y="60" class="t20 bb">Khối lượng cả đàn phân bố thế nào?</text>
+  <line x1="660" y1="176" x2="912" y2="176" class="km"/>
+  <rect x="662" y="168" width="18" height="8" class="fn" opacity=".45"/><rect x="683" y="158" width="18" height="18" class="fn" opacity=".45"/>
+  <rect x="704" y="142" width="18" height="34" class="fa"/><rect x="725" y="124" width="18" height="52" class="fa"/>
+  <rect x="746" y="110" width="18" height="66" class="fa"/><rect x="767" y="102" width="18" height="74" class="fa"/>
+  <rect x="788" y="106" width="18" height="70" class="fa"/><rect x="809" y="118" width="18" height="58" class="fa"/>
+  <rect x="830" y="134" width="18" height="42" class="fa"/><rect x="851" y="148" width="18" height="28" class="fa"/>
+  <rect x="872" y="160" width="18" height="16" class="fr"/><rect x="893" y="168" width="18" height="8" class="fr"/>
+  <line x1="869" y1="84" x2="869" y2="180" class="kr dash"/>
+  <text x="869" y="80" text-anchor="middle" class="t11 tr b">ngưỡng quá cỡ</text>
+  <text x="786" y="194" text-anchor="middle" class="t11 tm">khối lượng (g) →</text>
+  <g class="t13">
+    <text x="936" y="104" class="b tr">tỉ lệ cá quá cỡ</text>
+    <text x="936" y="126" class="b ta">độ đồng đều (CV)</text>
+    <text x="936" y="148" class="b ta">khối lượng trung bình</text>
+    <text x="936" y="170" class="tm">đuôi dưới: lấy từ mẻ chài</text>
+  </g>
+  <line x1="660" y1="206" x2="1180" y2="206" class="kl"/>
+  <g class="t13">
+    <text x="660" y="230" class="b tm">Hiện nay</text><text x="760" y="230">suy từ 17–30 con chài, 1–4 lần/tháng</text>
+    <text x="660" y="254" class="b tm">Đầu vào</text><text x="760" y="254">khối lượng hàng trăm con quan sát được mỗi phiên</text>
+    <text x="660" y="278" class="b tm">Đầu ra</text><text x="760" y="278">tỉ lệ quá cỡ, CV, khối lượng trung bình, ngày đạt cỡ</text>
+    <text x="660" y="302" class="b tm">Khó khăn</text><text x="760" y="302">sai số chọn mẫu: chỉ cá lên ăn mới vào khung hình</text>
+    <text x="660" y="326" class="b tm">Mục tiêu</text><text x="760" y="326" class="b ta">bỏ sót ≤ 5 % sự kiện vượt ngưỡng hành động</text>
+  </g>
+
+  <rect x="0" y="356" width="1200" height="92" rx="8" class="ff"/>
+  <text x="20" y="378" class="t11 bb tw" letter-spacing=".5">GIÁ TRỊ KINH TẾ</text>
+  <text x="20" y="410" class="t20 bb tw">13,6 tỷ đ</text>
+  <text x="20" y="432" class="t12 tw">doanh thu mỗi vụ của một ao 1 ha, 400 tấn</text>
+  <text x="420" y="410" class="t20 bb tw">≈ 28 triệu đ</text>
+  <text x="420" y="432" class="t12 tw">cho mỗi 1 % sản lượng nằm ngoài cửa sổ cỡ hợp đồng</text>
+  <text x="820" y="410" class="t20 bb tw">Cá quá cỡ</text>
+  <text x="820" y="432" class="t12 tw">bị nhà máy từ chối hoặc mua dưới giá thành</text>
+</svg></div></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p>Trình bày hai vấn đề theo thứ tự. <b>Bài toán 1</b>: từ ảnh lưng của một con ở mặt nước, ước khối lượng con đó; hiện nay khối lượng chỉ biết được khi bắt cá lên cân. <b>Bài toán 2</b>: từ khối lượng các con quan sát được, suy ra phân bố của cả đàn; khó khăn chính là chỉ cá lên ăn mới vào khung hình, nên phải hiệu chỉnh thiên lệch, và tỉ lệ cá dưới cỡ vẫn lấy từ mẻ chài. Kết quả bài toán 1 là đầu vào của bài toán 2. Dải dưới cùng nêu lý do kinh tế: giá trị nằm ở tỉ lệ cá ngoài cửa sổ cỡ, không nằm ở khối lượng trung bình. Hệ thống không ước tổng sinh khối; muốn có tổng phải biết thêm số con còn sống, lấy từ sổ nuôi.</p></aside>
+</section>
+<section class="slide" aria-label="Slide 4: Ba ràng buộc vật lý của ao nuôi cá tra">
+  <header class="top"><span class="sec">01 · Bài toán</span><span class="pg">4 / 14</span></header>
+  <h2>Ba ràng buộc vật lý của ao nuôi cá tra</h2>
+  <p class="lead">Nước đục, mật độ dày và quan hệ luỹ thừa ba quyết định cách đo khối lượng từng con.</p>
+  <div class="body full"><div class="viz"><svg class="dg" viewBox="0 0 640 290" role="img" aria-label="Ba ràng buộc: tầm nhìn dưới nước ngắn hơn thân cá; mật độ ao vượt ngưỡng tán xạ âm học; sai số chiều dài bị khuếch đại ba lần thành sai số khối lượng.">
+        <text x="20" y="30" class="t16 b">Nước đục</text>
+        <text x="20" y="62" class="t11 tm">tầm nhìn dưới nước</text>
+        <rect x="20" y="68" width="75" height="14" rx="2" class="fn hov"><title>10–25 cm</title></rect>
+        <text x="100" y="80" class="t11">10–25 cm</text>
+        <text x="20" y="108" class="t11 tm">thân cá thương phẩm</text>
+        <rect x="20" y="114" width="150" height="14" rx="2" class="ff hov"><title>35–50 cm</title></rect>
+        <text x="175" y="126" class="t11">35–50</text>
+        <text x="20" y="214" class="t20 b">98–128 NTU</text>
+        <text x="20" y="234" class="t11 tm">đo tại ao Cần Thơ</text>
+        <text x="20" y="256" class="t11 tr b">→ không dùng camera dưới nước</text>
+
+        <text x="233" y="30" class="t16 b">Mật độ dày</text>
+        <line x1="300.5" y1="74" x2="300.5" y2="120" class="kr"/>
+        <text x="300" y="68" text-anchor="middle" class="t11 tr">ngưỡng tán xạ 7,5</text>
+        <rect x="314" y="96" width="99" height="16" rx="2" class="fw hov"><title>Ao cá tra: 9–20 kg/m³</title></rect>
+        <text x="363" y="90" text-anchor="middle" class="t11 b">ao cá tra 9–20</text>
+        <line x1="233" y1="120" x2="413" y2="120" class="km"/>
+        <g class="t10 tm" text-anchor="middle"><text x="233" y="134">0</text><text x="278" y="134">5</text><text x="323" y="134">10</text><text x="368" y="134">15</text><text x="413" y="134">20 kg/m³</text></g>
+        <text x="233" y="214" class="t20 b">13–20 con/m³</text>
+        <text x="233" y="234" class="t11 tm">gấp 4–8 lần lồng cá hồi</text>
+        <text x="233" y="256" class="t11 tr b">→ không dùng sonar để đo cỡ</text>
+
+        <text x="446" y="30" class="t16 b">Luỹ thừa ba</text>
+        <text x="446" y="62" class="t11 tm">sai chiều dài 3,2 %</text>
+        <rect x="446" y="68" width="10.9" height="12" rx="2" class="fn"/>
+        <text x="446" y="96" class="t11 tm">→ sai khối lượng 10 %</text>
+        <rect x="446" y="102" width="34" height="12" rx="2" class="fr"/>
+        <text x="446" y="132" class="t11 tm">nhầm chuẩn đo dài 12–18 %</text>
+        <rect x="446" y="138" width="51" height="12" rx="2" class="fn"/>
+        <text x="446" y="166" class="t11 tm">→ sai khối lượng ~50 %</text>
+        <rect x="446" y="172" width="170" height="12" rx="2" class="fr"/>
+        <text x="446" y="216" class="t16 b">W ∝ L<tspan dy="-6" class="t10">3,11</tspan></text>
+        <text x="446" y="240" class="t11 ta b">→ đo diện tích lưng,</text>
+        <text x="446" y="254" class="t11 ta b">không đo chiều dài</text>
+      </svg></div></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p class="msg">Các giải pháp hiện có được thiết kế cho điều kiện khác: nước trong, mật độ thấp.</p>
+      <ul>
+        <li>Mỗi ràng buộc dẫn thẳng tới một lựa chọn thiết kế ở phần 3.</li>
+        <li>Mỗi cột trình bày một ràng buộc và hệ quả kỹ thuật tương ứng (dòng màu đỏ).</li>
+      </ul></aside>
+</section>
+<section class="slide" aria-label="Slide 5: Các giải pháp thương mại đã rà soát">
+  <header class="top"><span class="sec">02 · Giải pháp và phương pháp hiện có</span><span class="pg">5 / 14</span></header>
+  <h2>Các giải pháp thương mại đã rà soát</h2>
+  <p class="lead">Chưa có giải pháp nào giải được hai bài toán này cho cá tra trong ao đất nước đục.</p>
+  <div class="body full"><div class="viz tbl"><table class="t vend">
+<colgroup><col style="width:23%"><col style="width:22%"><col style="width:15%"><col style="width:13%"><col style="width:27%"></colgroup>
+<thead><tr><th>Giải pháp · nhà cung cấp</th><th>Công nghệ</th><th>Môi trường · loài</th><th>Độ chính xác</th><th>Lý do không áp dụng</th></tr></thead>
+<tbody>
+<tr><td>Aquabyte · WEIGHT, Hydra 360</td><td>Stereo dưới nước, thêm sonar</td><td>Lồng biển · cá hồi</td><td>Chưa công bố</td><td>Cần nước trong</td></tr>
+<tr><td>Innovasea · BiomassPro</td><td>Stereo + AI</td><td>Lồng biển · cá hồi</td><td>97–99,7 % <span class="src">H</span></td><td>Cần nước trong, mật độ thấp</td></tr>
+<tr><td>Ace Aquatec · A-BIOMASS</td><td>Hai camera stereo</td><td>Lồng biển · cá hồi</td><td>97–99,75 % <span class="src">H</span></td><td>Cần nước trong</td></tr>
+<tr><td>OptoScale · Bioscope 3.0</td><td>Camera gắn lồng</td><td>Lồng biển · cá hồi</td><td>Tới 98 % <span class="src">H</span></td><td>Cần nước trong</td></tr>
+<tr><td>TidalX AI · Orca</td><td>Camera + AI</td><td>Lồng biển · cá hồi</td><td>Chưa công bố</td><td>Chỉ áp dụng cho cá hồi lồng biển</td></tr>
+<tr><td>Umitron · LENS, Remora</td><td>Stereo cầm tay; phần mềm camera</td><td>Lồng biển</td><td>Chưa công bố</td><td>Stereo dưới nước cần nước trong</td></tr>
+<tr><td>ReelData · ReelBiomass</td><td>Camera + AI</td><td>Bể tuần hoàn (RAS)</td><td>Chưa công bố</td><td>Thiết kế cho bể nước trong</td></tr>
+<tr><td>Vaki / MSD · Biomass Daily</td><td>Khung 80×80 cm, cá bơi qua</td><td>Lồng biển · cá hồi</td><td>98,83 % <span class="src ind">ĐL</span></td><td>Ao 1 ha không đưa được cá qua khung</td></tr>
+<tr><td>Minnowtech · BRS-1</td><td>Sonar + AI</td><td>Ao tôm</td><td>Tới 95 % <span class="src">H</span></td><td>Đo tôm ở đáy; bão hoà âm ở mật độ cá tra</td></tr>
+<tr><td>XpertSea · XperCount 2</td><td>Đếm, đo mẫu trên khay</td><td>Ao tôm</td><td>Trên 95 % <span class="src">H</span></td><td>Phải vớt mẫu ra khỏi ao</td></tr>
+<tr><td>AquaScan · CSE</td><td>Máy đếm, cân khi cá đi qua</td><td>Cá chẽm, cá bơn</td><td>Chưa xác minh</td><td>Chỉ dùng lúc phân cỡ, thu hoạch</td></tr>
+<tr><td>Tép Bạc · JALA · AquaEasy · Rynan</td><td>IoT chất lượng nước, máy cho ăn</td><td>Chủ yếu ao tôm</td><td>Không đo kích cỡ</td><td>Không có chức năng đo sinh khối</td></tr>
+</tbody></table>
+<p class="tnote"><span class="src">H</span> hãng tự công bố, chưa kiểm định độc lập · <span class="src ind">ĐL</span> kiểm định độc lập, bài bình duyệt 2021 · Minnowtech: ~5.000 USD/máy, đơn tối thiểu 5 máy</p></div></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p>Hơn 20 nhà cung cấp đã được rà soát; bảng liệt kê các giải pháp tiêu biểu. Nhấn vào cột độ chính xác: phần lớn là số hãng tự công bố trong nước trong; chỉ Vaki có kiểm định độc lập, và cơ chế khung cá bơi qua không áp dụng được cho ao đất. Không giải pháp nào có dữ liệu cá tra.</p></aside>
+</section>
+<section class="slide" aria-label="Slide 6: Các phương pháp học thuật: lựa chọn và loại trừ">
+  <header class="top"><span class="sec">02 · Giải pháp và phương pháp hiện có</span><span class="pg">6 / 14</span></header>
+  <h2>Các phương pháp học thuật: lựa chọn và loại trừ</h2>
+  <p class="lead">Phần lớn kết quả tốt đã công bố đạt được trong nước trong hoặc trong bể; dự án chọn phương pháp chạy được ở ao đục.</p>
+  <div class="body full"><div class="viz tbl"><div class="scroll">
+      <table class="t">
+        <thead><tr><th>Phương pháp</th><th>Kết quả tốt nhất đã công bố</th><th>Điều kiện thí nghiệm</th><th>Quyết định</th></tr></thead>
+        <tbody>
+          <tr><td>Stereo dưới nước</td><td>sinh khối sai 0,4 %</td><td>lồng biển, nước trong</td><td><span class="no">Bỏ</span> không quan sát được trong nước đục</td></tr>
+          <tr><td>Keypoint đo chiều dài</td><td>MAE 0,35–0,75 cm</td><td>bể, 15–25 NTU</td><td><span class="no">Bỏ</span> chưa có công trình trên hình chiếu lưng</td></tr>
+          <tr><td>Độ sâu đơn mắt</td><td>2,42 cm sau tinh chỉnh</td><td>lồng biển</td><td><span class="no">Bỏ</span> không cần với camera nhìn thẳng đứng</td></tr>
+          <tr><td>Sonar ảnh ARIS/DIDSON</td><td>chiều dài 0,3–9,6 %</td><td>mật độ thấp</td><td><span class="no">Bỏ</span> tán xạ ở 9–20 kg/m³</td></tr>
+          <tr><td>Echosounder</td><td>R² 0,96 khối lượng</td><td>ao rô phi</td><td><span class="no">Bỏ</span> chưa có hệ số âm cho cá tra</td></tr>
+          <tr><td>Ước từ hành vi bắt mồi</td><td>lệch trên 50 %</td><td>ao cá nheo</td><td><span class="no">Bỏ</span></td></tr>
+          <tr><td>Phân vùng mask</td><td>R² 0,70</td><td>bể rô phi, nước đục</td><td><span class="ok">Chọn</span> bài toán 1: đo diện tích lưng</td></tr>
+          <tr><td>Thức ăn/FCR + Kalman</td><td>mô hình nền tăng trưởng</td><td>dữ liệu trại</td><td><span class="ok">Chọn</span> bài toán 2: mô hình tăng trưởng nền</td></tr>
+        </tbody>
+      </table>
+      </div></div></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p class="msg">Phương pháp được lựa chọn theo điều kiện vận hành của ao nuôi.</p>
+      <ul>
+        <li>Cột điều kiện thí nghiệm cho thấy phần lớn kết quả đạt được trong nước trong hoặc trong bể.</li>
+        <li>Mô hình phân vùng dùng bản Mask R-CNN / RTMDet-Ins giấy phép Apache-2.0, chi tiết ở slide Mô hình, dữ liệu và hạ tầng.</li>
+      </ul></aside>
+</section>
+<section class="slide" aria-label="Slide 7: Khoảng trống nghiên cứu">
+  <header class="top"><span class="sec">02 · Giải pháp và phương pháp hiện có</span><span class="pg">7 / 14</span></header>
+  <h2>Khoảng trống nghiên cứu</h2>
+  <p class="lead">Chưa có dữ liệu và công trình nào cho cá tra, nên phương án khả thi là tự phát triển.</p>
+  <div class="body full"><div class="viz"><svg class="dg" viewBox="0 0 640 250" role="img" aria-label="Ba khoảng trống: không có dataset cá tra có nhãn khối lượng; không có công trình đo cá bơi từ hình chiếu lưng; không có công trình thị giác máy hay âm học trên cá tra.">
+        <g class="km dash nf"><rect x="20" y="20" width="185" height="150" rx="8"/><rect x="228" y="20" width="185" height="150" rx="8"/><rect x="436" y="20" width="185" height="150" rx="8"/></g>
+        <g text-anchor="middle">
+          <text x="112" y="90" class="t40 bb tr">0</text><text x="112" y="128" class="t12">dataset cá tra có</text><text x="112" y="144" class="t12">nhãn khối lượng</text>
+          <text x="320" y="90" class="t40 bb tr">0</text><text x="320" y="128" class="t12">công trình đo cá đang bơi</text><text x="320" y="144" class="t12">từ hình chiếu lưng</text>
+          <text x="528" y="90" class="t40 bb tr">0</text><text x="528" y="128" class="t12">công trình thị giác máy,</text><text x="528" y="144" class="t12">âm học trên cá tra</text>
+        </g>
+        <text x="20" y="206" class="t12">4 dataset có nhãn kích thước trên thế giới đều chụp cá trên băng tải, khay hoặc bể.</text>
+        <text x="20" y="226" class="t12 b ta">Chưa có tiền lệ để đối chiếu; kết quả kiểm chứng sẽ là đóng góp mới.</text>
+      </svg></div></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p class="msg">Không có sản phẩm thương mại hay bộ dữ liệu sẵn có cho đối tượng này, nên phương án khả thi là tự phát triển.</p>
+      <ul><li>Hai điểm chưa có tiền lệ — sai số đo từng con trong ao và thiên lệch theo cỡ của cá lên ăn — được đo ở thử nghiệm thực địa đầu tiên.</li></ul></aside>
+</section>
+<section class="slide" aria-label="Slide 8: Cơ sở vật lý: cá bắt mồi ở tầng mặt">
+  <header class="top"><span class="sec">03 · Giải pháp</span><span class="pg">8 / 14</span></header>
+  <h2>Cơ sở vật lý: cá bắt mồi ở tầng mặt</h2>
+  <p class="lead">Khi rải thức ăn viên nổi, cá lên lớp nước 0–25 cm, trong tầm chụp của camera đặt trên mặt nước.</p>
+  <div class="body side"><div class="viz"><svg class="dg" viewBox="0 0 640 320" role="img" aria-label="Viên thức ăn nổi rơi xuống mặt nước; cá từ tầng dưới bơi lên lớp 0 đến 25 cm để ăn; không có thiết bị nào đặt dưới nước.">
+        <rect x="20" y="62" width="70" height="30" rx="4" class="fc k"/>
+        <text x="55" y="81" text-anchor="middle" class="t11 b">máy cho ăn</text>
+        <path d="M90,70 Q 200,10 300,104" class="km dash nf" marker-end="url(#ah)"/>
+        <rect x="0" y="110" width="640" height="200" class="fw"/>
+        <rect x="0" y="110" width="640" height="30" class="fas"/>
+        <g class="fp"><circle cx="210" cy="108" r="2.6"/><circle cx="236" cy="108" r="2.6"/><circle cx="262" cy="108" r="2.6"/><circle cx="288" cy="108" r="2.6"/><circle cx="314" cy="108" r="2.6"/><circle cx="340" cy="108" r="2.6"/><circle cx="366" cy="108" r="2.6"/><circle cx="392" cy="108" r="2.6"/><circle cx="418" cy="108" r="2.6"/></g>
+        <text x="630" y="130" text-anchor="end" class="t12 b">lớp 0–25 cm</text>
+        <g><use href="#ca" class="fo" transform="translate(390.2,125.3) rotate(-8)" x="-21.0" y="-7.0" width="41.9" height="14.0"/><use href="#ca" class="fo" transform="translate(208.4,127.3) rotate(-4) scale(-1,1)" x="-18.3" y="-6.1" width="36.6" height="12.2"/><use href="#ca" class="fo" transform="translate(270.4,128.8) rotate(3)" x="-20.9" y="-7.0" width="41.7" height="13.9"/><use href="#ca" class="fo" transform="translate(301.2,125.9) rotate(-7)" x="-20.6" y="-6.9" width="41.3" height="13.8"/><use href="#ca" class="fo" transform="translate(252.7,126.1) rotate(-8) scale(-1,1)" x="-20.4" y="-6.8" width="40.8" height="13.6"/><use href="#ca" class="fo" transform="translate(230.0,122.2) scale(-1,1)" x="-19.2" y="-6.4" width="38.5" height="12.8"/><use href="#ca" class="fo" transform="translate(416.2,130.0) rotate(-5) scale(-1,1)" x="-18.8" y="-6.3" width="37.6" height="12.5"/><use href="#ca" class="fo" transform="translate(351.9,127.7) rotate(1)" x="-19.6" y="-6.5" width="39.1" height="13.0"/><use href="#ca" class="fo" transform="translate(423.8,120.3) rotate(1) scale(-1,1)" x="-21.0" y="-7.0" width="42.1" height="14.0"/><use href="#ca" class="fo" transform="translate(229.7,129.7) rotate(-8)" x="-19.9" y="-6.6" width="39.9" height="13.3"/><use href="#ca" class="fo" transform="translate(323.6,125.2) rotate(3)" x="-21.0" y="-7.0" width="42.0" height="14.0"/><use href="#ca" class="fo" transform="translate(274.7,120.1) rotate(-6) scale(-1,1)" x="-21.7" y="-7.2" width="43.4" height="14.5"/><use href="#ca" class="fo" transform="translate(367.4,120.7) rotate(-3)" x="-18.4" y="-6.1" width="36.8" height="12.3"/><use href="#ca" class="fo" transform="translate(431.2,128.4) rotate(-6) scale(-1,1)" x="-17.3" y="-5.8" width="34.5" height="11.5"/><use href="#ca" class="fo" transform="translate(373.4,130.9) rotate(2)" x="-21.0" y="-7.0" width="41.9" height="14.0"/><use href="#ca" class="fo" transform="translate(341.5,120.4) rotate(4)" x="-17.5" y="-5.8" width="34.9" height="11.6"/><use href="#ca" class="fo2" opacity=".5" transform="translate(493.1,212.1) rotate(1)" x="-19.1" y="-6.4" width="38.3" height="12.8"/><use href="#ca" class="fo2" opacity=".5" transform="translate(81.3,223.8) scale(-1,1)" x="-21.5" y="-7.2" width="43.0" height="14.3"/><use href="#ca" class="fo2" opacity=".5" transform="translate(140.2,261.6) rotate(10)" x="-23.0" y="-7.7" width="46.0" height="15.3"/><use href="#ca" class="fo2" opacity=".5" transform="translate(253.0,247.5) rotate(-5) scale(-1,1)" x="-20.3" y="-6.8" width="40.6" height="13.5"/><use href="#ca" class="fo2" opacity=".5" transform="translate(431.0,208.6) rotate(-9) scale(-1,1)" x="-19.0" y="-6.3" width="37.9" height="12.6"/><use href="#ca" class="fo2" opacity=".5" transform="translate(48.6,225.6) rotate(10)" x="-19.2" y="-6.4" width="38.3" height="12.8"/><use href="#ca" class="fo2" opacity=".5" transform="translate(463.9,236.4) rotate(5) scale(-1,1)" x="-20.0" y="-6.7" width="40.1" height="13.4"/><use href="#ca" class="fo2" opacity=".5" transform="translate(160.7,295.2) rotate(9) scale(-1,1)" x="-18.6" y="-6.2" width="37.1" height="12.4"/><use href="#ca" class="fo2" opacity=".5" transform="translate(199.5,266.4) rotate(-2)" x="-21.3" y="-7.1" width="42.6" height="14.2"/><use href="#ca" class="fo2" transform="translate(150.0,242.0) rotate(-40) scale(-1,1)" x="-23.0" y="-7.7" width="46.0" height="15.3"/><line x1="168.7" y1="223.4" x2="190" y2="146" class="ka" marker-end="url(#aha)"/><use href="#ca" class="fo2" transform="translate(260.0,272.0) rotate(40)" x="-23.0" y="-7.7" width="46.0" height="15.3"/><line x1="243.1" y1="253.3" x2="262" y2="146" class="ka" marker-end="url(#aha)"/><use href="#ca" class="fo2" transform="translate(380.0,232.0) rotate(40)" x="-23.0" y="-7.7" width="46.0" height="15.3"/><line x1="361.7" y1="213.3" x2="350" y2="146" class="ka" marker-end="url(#aha)"/><use href="#ca" class="fo2" transform="translate(480.0,262.0) rotate(40)" x="-23.0" y="-7.7" width="46.0" height="15.3"/><line x1="460.8" y1="243.5" x2="420" y2="146" class="ka" marker-end="url(#aha)"/></g>
+        <text x="300" y="196" class="t12 b">lên ăn</text>
+        <text x="430" y="38" class="t16 b">6 tấn viên nổi/ngày</text>
+        <text x="430" y="58" class="t11 tm">ao 400 tấn, khẩu phần 1,5 %</text>
+        <text x="430" y="78" class="t11">100 % thức ăn ở mặt nước</text>
+        <rect x="548" y="228" width="30" height="18" rx="2" class="fc k"/>
+        <line x1="542" y1="222" x2="584" y2="252" class="kr" stroke-width="2.5"/><line x1="584" y1="222" x2="542" y2="252" class="kr" stroke-width="2.5"/>
+        <text x="563" y="272" text-anchor="middle" class="t11 b">không dùng</text>
+        <text x="563" y="286" text-anchor="middle" class="t11 b">camera dưới nước</text>
+      </svg></div><ul class="pts"><li>Bài toán 1: camera chụp rõ lưng từng con khi cá lên ăn.</li><li>Bài toán 2: chỉ cá lên ăn mới được quan sát; cá còi ở đáy không vào khung hình, nên tỉ lệ cá dưới cỡ lấy từ mẻ chài.</li><li>Không có thiết bị đặt dưới nước: không bám bẩn, không bị cá va chạm.</li></ul></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p>Cá lên lớp mặt 0–25 cm khi rải thức ăn viên nổi, nên camera đặt trên bờ chụp được lưng từng con. Điều này phục vụ bài toán 1. Với bài toán 2, cần nhấn giới hạn: chỉ cá lên ăn mới được quan sát, cá còi ở đáy không vào khung hình, nên tỉ lệ cá dưới cỡ vẫn lấy từ mẻ chài.</p></aside>
+</section>
+<section class="slide" aria-label="Slide 9: Cách giải hai bài toán: dữ liệu ảnh và nhãn">
+  <header class="top"><span class="sec">03 · Giải pháp</span><span class="pg">9 / 14</span></header>
+  <h2>Cách giải hai bài toán: dữ liệu ảnh và nhãn</h2>
+  <p class="lead">Bài toán 1 cần cân từng con làm nhãn; bài toán 2 cần phân bố thật lúc thu hoạch làm nhãn.</p>
+  <div class="body full"><div class="viz"><svg class="dg" viewBox="0 0 1200 470" role="img" aria-label="Pipeline lấy mẫu: ảnh lúc cho ăn và nhãn cân từng con đi vào bài toán 1; khối lượng từng con cùng nhãn phân bố thật đi vào bài toán 2; đầu ra là tỉ lệ quá cỡ, độ đồng đều, khối lượng trung bình; nghiệm thu so với đường cơ sở là cách ước thủ công hiện tại.">
+  <rect x="0" y="20" width="330" height="96" rx="8" class="fc k"/>
+  <text x="16" y="44" class="t11 bb ta" letter-spacing=".5">1 · DỮ LIỆU ẢNH</text>
+  <text x="16" y="68" class="t16 b">Chụp ảnh lúc cho ăn</text>
+  <text x="16" y="90" class="t12 tm">camera trên mặt nước, cữ chính 08:00</text>
+  <text x="16" y="106" class="t12 tm">≥300 con riêng biệt mỗi phiên</text>
+  <rect x="0" y="136" width="330" height="96" rx="8" class="fc k"/>
+  <text x="16" y="160" class="t11 bb ta" letter-spacing=".5">2 · NHÃN BÀI TOÁN 1</text>
+  <text x="16" y="184" class="t16 b">Cân từng con</text>
+  <text x="16" y="206" class="t12 tm">bàn đo ướt: chụp lưng rồi cân ngay</text>
+  <text x="16" y="222" class="t12 tm">đàn cá gắn thẻ màu thả lại ao</text>
+  <rect x="0" y="252" width="330" height="96" rx="8" class="fc k"/>
+  <text x="16" y="276" class="t11 bb ta" letter-spacing=".5">3 · NHÃN BÀI TOÁN 2</text>
+  <text x="16" y="300" class="t16 b">Phân bố thật toàn đàn</text>
+  <text x="16" y="322" class="t12 tm">cân, đếm toàn bộ lúc thu hoạch</text>
+  <text x="16" y="338" class="t12 tm">bảng nhà máy (khối lượng cá nguyên con)</text>
+  <rect x="0" y="368" width="330" height="80" rx="8" class="fc km dash"/>
+  <text x="16" y="392" class="t11 bb tm" letter-spacing=".5">ĐƯỜNG CƠ SỞ</text>
+  <text x="16" y="414" class="t14 b">Cách ước thủ công hiện tại</text>
+  <text x="16" y="434" class="t12 tm">chài 20–30 con + sổ cho ăn: để so sánh</text>
+
+  <rect x="430" y="30" width="330" height="170" rx="8" class="fas ka"/>
+  <text x="446" y="58" class="t16 bb">Bài toán 1</text>
+  <text x="446" y="80" class="t13">ảnh một con → khối lượng con đó</text>
+  <text x="446" y="110" class="t12 tm">đo diện tích lưng, quy đổi ra gram</text>
+  <text x="446" y="130" class="t12 tm">hiệu chỉnh khúc xạ và mực nước</text>
+  <text x="446" y="160" class="t12 b ta">mục tiêu: sai số từng con ≤ 15 %</text>
+  <text x="446" y="180" class="t12 b ta">độ lệch trung bình ≤ 3–5 %</text>
+  <rect x="430" y="240" width="330" height="190" rx="8" class="fas ka"/>
+  <text x="446" y="268" class="t16 bb">Bài toán 2</text>
+  <text x="446" y="290" class="t13">gram các con quan sát → phân bố toàn ao</text>
+  <text x="446" y="320" class="t12 tm">hiệu chỉnh: không phải con nào cũng lên ăn</text>
+  <text x="446" y="340" class="t12 tm">loại phần sai số đo khỏi độ phân tán</text>
+  <text x="446" y="360" class="t12 tm">gộp nhiều phiên chụp cho mỗi ao</text>
+  <text x="446" y="392" class="t12 b tr">không ước được tỉ lệ cá dưới cỡ:</text>
+  <text x="446" y="412" class="t12 tm">phần này lấy từ mẻ chài</text>
+
+  <rect x="860" y="100" width="340" height="130" rx="8" class="ff"/>
+  <text x="876" y="128" class="t16 bb tw">Đầu ra</text>
+  <text x="876" y="156" class="t13 tw">tỉ lệ cá quá cỡ, độ đồng đều (CV)</text>
+  <text x="876" y="178" class="t13 tw">khối lượng trung bình, ngày đạt cỡ</text>
+  <text x="876" y="206" class="t12 tw">cảnh báo: hãy chài để xác nhận</text>
+  <rect x="860" y="280" width="340" height="120" rx="8" class="frs"/>
+  <text x="876" y="308" class="t16 bb">Nghiệm thu</text>
+  <text x="876" y="334" class="t13">sai số thấp hơn cách ước hiện tại,</text>
+  <text x="876" y="354" class="t13">trên các ao không dùng để huấn luyện</text>
+  <text x="876" y="382" class="t12 tm">chuẩn: dữ liệu thu hoạch, nhà máy</text>
+
+  <line x1="330" y1="80" x2="428" y2="80" class="k" marker-end="url(#ah)"/>
+  <text x="379" y="72" text-anchor="middle" class="t11 tm">ảnh từng con</text>
+  <line x1="330" y1="170" x2="428" y2="170" class="ka dash" marker-end="url(#aha)"/>
+  <text x="379" y="162" text-anchor="middle" class="t11 ta b">nhãn</text>
+  <line x1="330" y1="300" x2="428" y2="300" class="ka dash" marker-end="url(#aha)"/>
+  <text x="379" y="292" text-anchor="middle" class="t11 ta b">nhãn</text>
+  <line x1="595" y1="200" x2="595" y2="238" class="k" marker-end="url(#ah)"/>
+  <text x="605" y="224" class="t11 tm">gram từng con</text>
+  <path d="M760,290 H810 V165 H858" class="k nf" marker-end="url(#ah)"/>
+  <line x1="760" y1="345" x2="858" y2="345" class="k" marker-end="url(#ah)"/>
+  <text x="809" y="337" text-anchor="middle" class="t11 tm">kiểm định</text>
+  <path d="M165,448 V458 H1030 V402" class="km nf dash" marker-end="url(#ah)"/>
+  <text x="700" y="452" text-anchor="middle" class="t11 tm">so sánh</text>
+</svg></div></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p>Slide này nối trực tiếp với slide 3. Ảnh lúc cho ăn đi vào bài toán 1; nhãn là cân từng con trên bàn đo ướt và đàn cá gắn thẻ, vì cá chài cân theo cách hiện nay không ghép được với ảnh của đúng con đó. Khối lượng từng con đi vào bài toán 2; nhãn là phân bố thật lúc thu hoạch hoặc bảng phân cỡ nhà máy. Cách ước thủ công hiện tại chỉ dùng để so sánh, không làm nhãn.</p></aside>
+</section>
+<section class="slide" aria-label="Slide 10: Cơ chế chụp ảnh lúc cho ăn">
+  <header class="top"><span class="sec">03 · Giải pháp</span><span class="pg">10 / 14</span></header>
+  <h2>Cơ chế chụp ảnh lúc cho ăn</h2>
+  <p class="lead">Mỗi lựa chọn về camera, độ cao, giờ chụp và số lượng ảnh đều có căn cứ đã công bố.</p>
+  <div class="body full"><div class="viz tbl"><table class="t vend">
+<colgroup><col style="width:15%"><col style="width:42%"><col style="width:43%"></colgroup>
+<thead><tr><th>Hạng mục</th><th>Cấu hình</th><th>Căn cứ</th></tr></thead>
+<tbody>
+<tr><td>Camera</td><td>Camera màu thường, treo trên mặt nước, nhìn thẳng xuống</td><td>Đã dùng trên bể nước đục 20–40 NTU, sai số chiều dài 5,2 % (Yin 2026)</td></tr>
+<tr><td>Độ cao</td><td>5 m. Cá ở độ sâu 0–25 cm gây sai khoảng ±5,6 % khối lượng mỗi con; phần lớn triệt tiêu khi lấy trung bình</td><td>Tính từ công thức khúc xạ (Yin 2026)</td></tr>
+<tr><td>Tham chiếu tỉ lệ</td><td>Hiệu chuẩn ống kính trước khi lắp; thước thuỷ chí đo khoảng cách tới mặt nước</td><td>Hiệu chuẩn ống kính giảm 96 % sai số (Monkman 2019)</td></tr>
+<tr><td>Giờ chụp</td><td>Chụp lúc cho ăn 08:00; cữ 14:00 chỉ dùng khi có mái che</td><td>Lúc 08:00 vệt chói mặt trời nằm ngoài khung ảnh; buổi chiều hay có mưa giông (Cox & Munk 1954; Ohsawa 2001)</td></tr>
+<tr><td>Phơi sáng</td><td>Tốc độ ≤ 1/1000 s; cố định cân bằng trắng</td><td>Cá bơi nhanh không bị nhoè; màu ảnh ổn định giữa các ngày (Richardson 2018)</td></tr>
+<tr><td>Lọc ảnh</td><td>Tự động loại ảnh cháy sáng, mờ, bị chói</td><td>Dùng các chỉ số chất lượng ảnh đã có sẵn</td></tr>
+<tr><td>Số lượng</td><td>≥ 300 con khác nhau mỗi phiên; nhiều phiên cho mỗi ao</td><td>Đủ để mô tả phân bố khoảng 30 lớp cỡ (Gerritsen 2007)</td></tr>
+</tbody></table>
+<p class="tnote">Chi tiết và nguồn đầy đủ: mục 6 của đề án.</p></div></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p>Đây là khâu quyết định tính khả thi của dự án. Mỗi lựa chọn có căn cứ từ nghiên cứu đã công bố. Điểm cần nhấn: chụp lúc 08:00 vì vệt chói mặt trời nằm ngoài khung ảnh; buổi chiều hay mưa giông. Chi tiết ở mục 6 của đề án.</p></aside>
+</section>
+<section class="slide" aria-label="Slide 11: Mô hình, dữ liệu và hạ tầng">
+  <header class="top"><span class="sec">03 · Giải pháp</span><span class="pg">11 / 14</span></header>
+  <h2>Mô hình, dữ liệu và hạ tầng</h2>
+  <p class="lead">Bài toán 1 chạy tại bờ ao, bài toán 2 chạy trên máy chủ; chỉ khối lượng từng con được truyền đi.</p>
+  <div class="body side"><div class="viz"><div class="scroll">
+      <svg class="dg" viewBox="0 0 640 310" role="img" aria-label="Luồng xử lý: camera ghi 5 khung/giây, lấy 1 khung/giây, phân vùng cá, lọc và bám vết, quy diện tích ra gram tại bờ ao (bài toán 1); gửi JSON khoảng 88 kB/ngày về máy chủ tại Việt Nam rồi lên app. Dữ liệu huấn luyện đến từ SAM 2 và bàn đo ướt.">
+        <rect x="14" y="34" width="612" height="94" rx="8" class="km dash nf"/>
+        <text x="24" y="26" class="t11 tm">Tại bờ ao · Jetson Orin Nano, 1 bộ cho 2 ao</text>
+        <g class="fc k"><rect x="28" y="52" width="104" height="56" rx="6"/><rect x="148" y="52" width="104" height="56" rx="6"/><rect x="268" y="52" width="104" height="56" rx="6"/><rect x="388" y="52" width="104" height="56" rx="6"/><rect x="508" y="52" width="104" height="56" rx="6"/></g>
+        <g text-anchor="middle">
+          <text x="80" y="76" class="t11 b">Camera</text><text x="80" y="92" class="t10 tm">ghi 5 fps vào SSD</text>
+          <text x="200" y="76" class="t11 b">1 khung/giây</text><text x="200" y="92" class="t10 tm">giảm tải GPU 5 lần</text>
+          <text x="320" y="76" class="t11 b">Tách từng con</text><text x="320" y="92" class="t10 tm">Mask R-CNN</text>
+          <text x="440" y="76" class="t11 b">Lọc + bám vết</text><text x="440" y="92" class="t10 tm">mỗi con một lần</text>
+          <text x="560" y="76" class="t11 b ta">Bài toán 1</text><text x="560" y="92" class="t10 tm">diện tích → gram</text>
+        </g>
+        <g class="k"><line x1="132" y1="80" x2="146" y2="80" marker-end="url(#ah)"/><line x1="252" y1="80" x2="266" y2="80" marker-end="url(#ah)"/><line x1="372" y1="80" x2="386" y2="80" marker-end="url(#ah)"/><line x1="492" y1="80" x2="506" y2="80" marker-end="url(#ah)"/></g>
+        <text x="28" y="186" class="t11 tm">Dữ liệu huấn luyện,</text><text x="28" y="200" class="t11 tm">làm một lần</text>
+        <g class="fas"><rect x="268" y="160" width="104" height="46" rx="6"/><rect x="508" y="160" width="104" height="46" rx="6"/></g>
+        <g text-anchor="middle"><text x="320" y="180" class="t11 b">SAM 2 gán nhãn</text><text x="320" y="196" class="t10 tm">nhanh hơn 83,5 %</text>
+          <text x="560" y="180" class="t11 b">Bàn đo ướt</text><text x="560" y="196" class="t10 tm">1.000 cặp ảnh–cân</text></g>
+        <g class="ka"><line x1="320" y1="160" x2="320" y2="112" marker-end="url(#aha)"/><line x1="560" y1="160" x2="560" y2="112" marker-end="url(#aha)"/></g>
+        <path d="M612,80 H630 V273 H494" class="k nf" marker-end="url(#ah)"/>
+        <text x="560" y="266" text-anchor="middle" class="t11 tm">JSON ~88 kB/ngày</text>
+        <g class="fc k"><rect x="388" y="250" width="104" height="46" rx="6"/><rect x="148" y="250" width="104" height="46" rx="6"/></g>
+        <g text-anchor="middle"><text x="440" y="270" class="t11 b ta">Bài toán 2</text><text x="440" y="286" class="t10 tm">máy chủ tại VN</text>
+          <text x="200" y="270" class="t11 b">App + Zalo</text><text x="200" y="286" class="t10 tm">chủ trại, công nhân</text></g>
+        <line x1="388" y1="273" x2="254" y2="273" class="k" marker-end="url(#ah)"/>
+        <text x="321" y="266" text-anchor="middle" class="t11 tm">phân bố, cảnh báo</text>
+      </svg>
+      </div></div><ul class="pts"><li>Bài toán 1 tại bờ ao: tách từng con, mỗi con đo một lần, quy diện tích lưng ra gram.</li><li>Bài toán 2 trên máy chủ tại Việt Nam: gộp nhiều phiên chụp để ra phân bố của ao.</li><li>Dữ liệu gửi đi nhỏ hơn video 212 lần; dùng 4G là đủ.</li><li>Nhãn bài toán 1: bàn đo ướt và đàn cá gắn thẻ; gán nhãn ảnh có SAM 2 hỗ trợ.</li></ul></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p>Bài toán 1 chạy tại bờ ao: tách từng con, bám vết để mỗi con chỉ đo một lần, rồi quy diện tích lưng ra gram. Chỉ khối lượng từng con được gửi lên máy chủ, nên 4G là đủ. Bài toán 2 chạy trên máy chủ tại Việt Nam, gộp nhiều phiên chụp của mỗi ao để ra phân bố. Nhãn cho bài toán 1 lấy từ bàn đo ướt và đàn cá gắn thẻ.</p></aside>
+</section>
+<section class="slide" aria-label="Slide 12: Giao diện người dùng">
+  <header class="top"><span class="sec">03 · Giải pháp</span><span class="pg">12 / 14</span></header>
+  <h2>Giao diện người dùng</h2>
+  <p class="lead">Ứng dụng hiển thị kết quả kèm khoảng tin cậy, và nhắc công nhân chài khi cần xác nhận.</p>
+  <div class="body full"><div class="viz"><svg class="dg" viewBox="0 0 640 340" role="img" aria-label="Màn hình app hiện khoảng khối lượng, dải tin cậy, trạng thái neo và nút hãy chài để xác nhận; cảnh báo gửi qua Zalo.">
+        <rect x="40" y="10" width="220" height="320" rx="24" class="fc k"/>
+        <rect x="60" y="34" width="62" height="18" rx="4" class="fa"/><text x="91" y="47" text-anchor="middle" class="t10 b ton">ĐÃ NEO</text>
+        <text x="60" y="76" class="t11 tm">Ao số 3 · ngày tuổi 148</text>
+        <text x="60" y="102" class="t11 tm">Khối lượng trung bình</text>
+        <text x="60" y="130" class="t20 bb">1,05–1,25 kg</text>
+        <polygon points="60,214 100,200 140,186 180,170 200,162 240,144 240,182 200,178 180,180 140,196 100,208 60,222" class="fas"/>
+        <polyline points="60,218 100,204 140,191 180,175 200,169" class="ka nf"/>
+        <polyline points="200,169 240,161" class="ka nf dash"/>
+        <text x="60" y="246" class="t10 tm">Neo gần nhất 12/03 · cách đây 18 ngày</text>
+        <text x="60" y="264" class="t11">80 % khả năng đã đạt cỡ</text>
+        <rect x="56" y="282" width="188" height="32" rx="8" class="fa"/>
+        <text x="150" y="302" text-anchor="middle" class="t12 b ton">HÃY CHÀI ĐỂ XÁC NHẬN</text>
+
+        <rect x="300" y="30" width="320" height="86" rx="10" class="fas"/>
+        <text x="316" y="54" class="t12 b">Zalo · Cảnh báo ao số 3</text>
+        <text x="316" y="76" class="t11">Tỉ lệ cá vượt 1,2 kg đang tăng nhanh.</text>
+        <text x="316" y="94" class="t11">Nên chài kiểm tra ở trạm B trong 3 ngày tới.</text>
+        <text x="300" y="160" class="t13 b">Quy tắc hiển thị</text>
+        <g class="t11">
+          <text x="300" y="184">• luôn hiện khoảng, không hiện một con số đơn lẻ</text>
+          <text x="300" y="204">• làm tròn thô: 1,1 kg thay vì 1,147 kg</text>
+          <text x="300" y="224">• nêu cả hai chiều: 80 % đạt, 20 % chưa</text>
+          <text x="300" y="244">• bấm vào là xem được ảnh gốc và mẻ chài gốc</text>
+          <text x="300" y="264">• in được một trang A4 tóm tắt tuần</text>
+        </g>
+      </svg></div></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p class="msg">Giao diện trình bày độ bất định để người dùng đánh giá đúng mức tin cậy của kết quả.</p>
+      <ul>
+        <li>Có thể chèn link demo biểu đồ tương tác đã có sẵn.</li>
+        <li>Bảo trì hằng tuần chỉ một thao tác: lau ống kính và tấm chuẩn, không lội nước.</li>
+      </ul></aside>
+</section>
+<section class="slide" aria-label="Slide 13: So sánh phương án mua và tự phát triển">
+  <header class="top"><span class="sec">04 · Lựa chọn tự phát triển</span><span class="pg">13 / 14</span></header>
+  <h2>So sánh phương án mua và tự phát triển</h2>
+  <p class="lead">Chưa có sản phẩm thương mại phù hợp với ao cá tra; chi phí tự phát triển thấp hơn nhiều so với thiết bị nhập khẩu.</p>
+  <div class="body s14"><div class="viz tbl"><table class="t">
+        <thead><tr><th>Tiêu chí</th><th>Mua hệ nước ngoài</th><th>Tự phát triển</th></tr></thead>
+        <tbody>
+          <tr><td>Chạy trong ao đất đục</td><td><span class="no">Không</span> thiết kế cho lồng biển, RAS, ao tôm</td><td><span class="ok">Có</span> camera trên mặt nước</td></tr>
+          <tr><td>Dữ liệu cá tra</td><td><span class="no">Không hãng nào có</span></td><td><span class="ok">Tự thu</span> 1.000 cặp ảnh–cân</td></tr>
+          <tr><td>Đại lý, bảo hành tại VN</td><td>chưa có; hỏng phải gửi ra nước ngoài</td><td>kỹ thuật viên thường trú Cần Thơ</td></tr>
+          <tr><td>Thời gian hiệu chuẩn</td><td>~3 vụ (1,5–2,5 năm) với sonar ao</td><td>neo ngay vụ đầu bằng cân thật</td></tr>
+          <tr><td>Quyền với mô hình</td><td>mô hình đóng, không hiệu chỉnh được cho cá tra</td><td>sở hữu toàn bộ, nền Apache-2.0</td></tr>
+          <tr><td>Nơi lưu dữ liệu</td><td>máy chủ nước ngoài</td><td>máy chủ tại VN, theo Luật 91/2025</td></tr>
+          <tr><td>Mô hình bán</td><td>mua đứt, giá không công bố</td><td>thuê bao theo ao</td></tr>
+        </tbody>
+      </table></div><div class="viz"><svg class="dg" viewBox="0 0 420 400" role="img" aria-label="Chi phí thiết bị ban đầu: Minnowtech khoảng 390 triệu đồng cho đơn tối thiểu 5 máy; tự phát triển 48,65 triệu đồng mỗi ao với giàn cố định và 13,52 triệu đồng mỗi ao với giàn di động.">
+  <text x="0" y="22" class="t13 b">Chi phí thiết bị ban đầu, triệu đồng</text>
+  <line x1="10" y1="300" x2="410" y2="300" class="km"/>
+  <rect x="30" y="70" width="80" height="230" rx="4" class="fn"><title>~390 triệu đ</title></rect>
+  <rect x="170" y="271.3" width="80" height="28.7" rx="4" class="fa"><title>48,65 triệu đ/ao</title></rect>
+  <rect x="310" y="292" width="80" height="8" rx="3" class="fa"><title>13,52 triệu đ/ao</title></rect>
+  <g text-anchor="middle" class="t13 b"><text x="70" y="60">~390</text><text x="210" y="262">48,65</text><text x="350" y="283">13,52</text></g>
+  <g text-anchor="middle" class="t12">
+    <text x="70" y="322">Minnowtech</text><text x="70" y="338" class="tm">tối thiểu 5 máy</text>
+    <text x="210" y="322">Tự phát triển</text><text x="210" y="338" class="tm">giàn cố định, mỗi ao</text>
+    <text x="350" y="322">Tự phát triển</text><text x="350" y="338" class="tm">giàn di động, mỗi ao</text>
+  </g>
+  <text x="0" y="372" class="t11 tm">Minnowtech chưa gồm thuế nhập khẩu, VAT và thuê bao;</text>
+  <text x="0" y="388" class="t11 tm">một đơn tối thiểu chỉ phủ khoảng 5 ha ao tôm.</text>
+</svg></div></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p class="msg">Chưa có sản phẩm thương mại phù hợp với điều kiện ao cá tra, và chi phí tự phát triển tương thích với kinh tế ao nuôi.</p>
+      <ul>
+        <li>Mức giá thiết bị phổ biến tại ao nuôi Việt Nam là 6,6–8,25 triệu đ (máy cho ăn Tép Bạc), do đó áp dụng mô hình thuê bao.</li>
+        <li>Các hệ stereo lồng biển không công bố giá. Không đưa con số ước nào lên slide.</li>
+      </ul></aside>
+</section>
+<section class="slide" aria-label="Slide 14: Thành phần kế thừa và thành phần tự phát triển">
+  <header class="top"><span class="sec">04 · Lựa chọn tự phát triển</span><span class="pg">14 / 14</span></header>
+  <h2>Thành phần kế thừa và thành phần tự phát triển</h2>
+  <p class="lead">Dự án kế thừa phần mềm mã nguồn mở và phần cứng thương mại; tự phát triển phần giải hai bài toán cho cá tra.</p>
+  <div class="body full"><div class="viz"><svg class="dg" viewBox="0 0 640 300" role="img" aria-label="Phần kế thừa gồm phần cứng thương mại và mã nguồn mở Apache-2.0; phần tự phát triển gồm giao thức neo, mô hình hình thái cá tra, thước thủy chí và vòng dữ liệu với nhà máy. Vòng lặp camera, thu hoạch, bảng phân cỡ nhà máy, hiệu chỉnh tạo ra chuỗi dữ liệu hiệu chuẩn tích luỹ theo thời gian.">
+        <text x="20" y="28" class="t13 b">Phân định thành phần</text>
+        <rect x="20" y="44" width="280" height="104" rx="6" class="fa"/>
+        <text x="34" y="66" class="t10 b ton" letter-spacing="1">TỰ PHÁT TRIỂN</text>
+        <g class="t11 ton"><text x="34" y="86">bài toán 1: diện tích lưng → gram cá tra</text><text x="34" y="102">bài toán 2: hiệu chỉnh, phân bố toàn ao</text><text x="34" y="118">pipeline chụp ảnh và gán nhãn</text><text x="34" y="134">vòng dữ liệu với nhà máy</text></g>
+        <rect x="20" y="156" width="280" height="50" rx="6" class="fc k"/>
+        <text x="34" y="176" class="t10 b tm" letter-spacing="1">KẾ THỪA · MÃ NGUỒN MỞ APACHE-2.0</text>
+        <text x="34" y="194" class="t11">Detectron2 · MMDetection · SAM 2 · ByteTrack</text>
+        <rect x="20" y="214" width="280" height="50" rx="6" class="fc k"/>
+        <text x="34" y="234" class="t10 b tm" letter-spacing="1">KẾ THỪA · PHẦN CỨNG THƯƠNG MẠI</text>
+        <text x="34" y="252" class="t11">camera IP · Jetson · router 4G công nghiệp</text>
+
+        <circle cx="480" cy="160" r="90" class="km nf"/>
+        <g class="ka nf">
+          <path d="M518,88.4 A90,90 0 0 1 561.6,132" marker-end="url(#aha)"/>
+          <path d="M561.6,208 A90,90 0 0 1 518,251.6" marker-end="url(#aha)"/>
+          <path d="M442,251.6 A90,90 0 0 1 398.4,208" marker-end="url(#aha)"/>
+          <path d="M398.4,132 A90,90 0 0 1 442,88.4" marker-end="url(#aha)"/>
+        </g>
+        <g class="fc k"><rect x="424" y="58" width="112" height="24" rx="5"/><rect x="530" y="148" width="80" height="24" rx="5"/><rect x="402" y="238" width="156" height="24" rx="5"/><rect x="340" y="148" width="100" height="24" rx="5"/></g>
+        <g text-anchor="middle" class="t11"><text x="480" y="74">Camera dự báo</text><text x="570" y="164">Thu hoạch</text><text x="480" y="254">Bảng phân cỡ nhà máy</text><text x="390" y="164">Hiệu chỉnh</text></g>
+        <text x="480" y="146" text-anchor="middle" class="t12 b">Lịch sử neo</text>
+        <text x="480" y="162" text-anchor="middle" class="t12 b">theo ao-vụ</text>
+        <text x="480" y="178" text-anchor="middle" class="t10 tm">tích luỹ dần</text>
+        <text x="20" y="292" class="t11 tm">Bộ ảnh huấn luyện không tạo lợi thế cạnh tranh: chi phí tái lập ước ~158 triệu đ, 12–16 tháng.</text>
+      </svg></div></div>
+  
+  <svg class="wave" viewBox="0 0 1280 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C160,8 320,36 480,22 C640,8 800,36 960,22 C1120,8 1200,30 1280,20 V40 H0 Z" class="wv1"/><path d="M0,30 C180,20 340,40 520,30 C700,20 860,40 1040,30 C1160,24 1230,34 1280,30 V40 H0 Z" class="wv2"/></svg>
+  <aside class="spk"><p class="msg">Lợi thế cạnh tranh nằm ở quyền tiếp cận dữ liệu phân cỡ của nhà máy và chuỗi dữ liệu hiệu chuẩn tích luỹ theo ao-vụ.</p>
+      <ul>
+        <li>Nhánh phân bố cỡ: Nha Trang Food có nhà máy riêng, nên vòng lặp này khép kín ngay trong nội bộ.</li>
+        <li>Rủi ro: các doanh nghiệp sở hữu cả ao nuôi và nhà máy đồng thời là khách hàng và đối thủ tiềm năng.</li>
+      </ul></aside>
+</section>
+</main>
+<div class="notes-panel" id="notes" hidden aria-live="polite"></div>
+<script>
+(function(){
+  const stage=document.getElementById('stage');
+  const slides=[...stage.querySelectorAll('.slide')];
+  const bar=document.querySelector('.bar'), np=document.getElementById('notes');
+  let i=0;
+  function fit(){const s=Math.min(innerWidth/1280,innerHeight/720);stage.style.transform='translate(-50%,-50%) scale('+s+')';}
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('on',k===i));
+    bar.style.width=((i+1)/slides.length*100)+'%';
+    const sp=slides[i].querySelector('.spk'); np.innerHTML=sp?sp.innerHTML:'';
+    history.replaceState(null,'','#'+(i+1));
+  }
+  addEventListener('resize',fit);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();show(i+1);}
+    else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();show(i-1);}
+    else if(e.key==='Home')show(0); else if(e.key==='End')show(slides.length-1);
+    else if(e.key==='n'||e.key==='N')np.hidden=!np.hidden;
+    else if(e.key==='f'||e.key==='F')toggleFs();
+  });
+  function toggleFs(){try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}catch(_){}}
+  const h=parseInt(location.hash.slice(1),10);
+  fit(); show(isNaN(h)?0:h-1);
+})();
+</script>
+</body>
+</html>
